@@ -20,7 +20,7 @@
   color-scheme:dark;
 }
 [hidden]{display:none!important}
-html,body{height:100%;margin:0;overflow:hidden;overscroll-behavior:none;background:var(--bd);color:var(--ink);transition:background-color 1.2s}
+html,body{height:100%;margin:0;overflow:hidden;overscroll-behavior:none;background:#000;color:var(--ink);transition:background-color 1.2s}
 body{font-family:var(--body);font-size:20px;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;touch-action:none}
 #app{position:fixed;top:0;bottom:0;left:50%;transform:translateX(-50%);width:min(100vw,54vh);overflow:hidden;background:var(--bd);transition:background-color 1.2s}
 #view{position:absolute;inset:0;width:100%;height:100%;display:block;filter:blur(.45px) contrast(1.06) saturate(1.08)}
@@ -565,7 +565,12 @@ function catchNear(x,y,n){let best=-1,bd=18;flies.forEach((f,i)=>{const d=Math.h
 const app=document.getElementById('app'),view=document.getElementById('view'),vg=view.getContext('2d');
 const lo=document.createElement('canvas'),lg=lo.getContext('2d',{willReadFrequently:true});
 let pic=null,LW=PW,LH=FH,JY=300,S=2,pbuf=null,seed=1,gseed=1,gf=0;
-function layout(){const w=app.clientWidth,h=app.clientHeight,cs=getComputedStyle(document.getElementById('probe'));
+// iOS home-screen apps with a translucent status bar report a viewport shorter than the screen by the status bar height,
+// which leaves a strip at the bottom. Size the app to the real screen there.
+function fitApp(){const standalone=navigator.standalone===true||matchMedia('(display-mode: standalone)').matches,
+  full=innerHeight>=innerWidth?Math.max(screen.width,screen.height):Math.min(screen.width,screen.height);
+  if(standalone&&full>innerHeight){app.style.height=full+'px';app.style.bottom='auto'}else{app.style.height='';app.style.bottom=''}}
+function layout(){fitApp();const w=app.clientWidth,h=app.clientHeight,cs=getComputedStyle(document.getElementById('probe'));
   const st=parseFloat(cs.paddingTop)||0,sb=parseFloat(cs.paddingBottom)||0;
   S=w/PW;const fh=Math.max(PH,Math.round(h/S)),extra=fh-PH,nt=Math.round(extra*.45);
   if(fh!==FH||nt!==T||!pic){FH=fh;T=nt;B=extra-nt;for(const e of ENVS)e.bg=e.make();pic=mk()}
@@ -574,7 +579,7 @@ function layout(){const w=app.clientWidth,h=app.clientHeight,cs=getComputedStyle
   const yTop=(tLo+10)*S;document.getElementById('top').style.top=yTop+'px';document.getElementById('menu').style.top=yTop+'px';
   document.getElementById('bot').style.top=(JY*S)+'px';document.getElementById('count').style.top=((JY+14)*S)+'px';
   document.getElementById('toast').style.top=((JY-44)*S)+'px'}
-addEventListener('resize',layout);
+addEventListener('resize',layout);addEventListener('orientationchange',()=>setTimeout(layout,300));
 function drawJar(t){const n=save.jar[env.key]||0,x=Math.round(LW/2-7),y=JY-12,tint=env.tint;
   lg.fillStyle='rgba(0,0,0,.35)';lg.fillRect(x,y+4,14,20);R(lg,x+3,y,8,3,C.rust);R(lg,x+2,y+3,10,1,C.rustD);
   line(lg,x+1,y+5,x+1,y+21,C.cyM);line(lg,x+12,y+5,x+12,y+21,C.cyM);line(lg,x+2,y+22,x+11,y+22,C.cyM);P(lg,x+2,y+4,C.cyM);P(lg,x+11,y+4,C.cyM);line(lg,x+3,y+7,x+3,y+11,'#5a7a84');
