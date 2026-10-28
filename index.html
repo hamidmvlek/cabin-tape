@@ -6,9 +6,9 @@
 <title>Cabin Tape</title>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Cabin Tape">
-<meta name="theme-color" content="#3b1c0d">
+<meta name="theme-color" content="#000000">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen&family=VT323&display=swap">
 <style>
@@ -565,12 +565,9 @@ function catchNear(x,y,n){let best=-1,bd=18;flies.forEach((f,i)=>{const d=Math.h
 const app=document.getElementById('app'),view=document.getElementById('view'),vg=view.getContext('2d');
 const lo=document.createElement('canvas'),lg=lo.getContext('2d',{willReadFrequently:true});
 let pic=null,LW=PW,LH=FH,JY=300,S=2,pbuf=null,seed=1,gseed=1,gf=0;
-// iOS home-screen apps with a translucent status bar report a viewport shorter than the screen by the status bar height,
-// which leaves a strip at the bottom. Size the app to the real screen there.
-function fitApp(){const standalone=navigator.standalone===true||matchMedia('(display-mode: standalone)').matches,
-  full=innerHeight>=innerWidth?Math.max(screen.width,screen.height):Math.min(screen.width,screen.height);
-  if(standalone&&full>innerHeight){app.style.height=full+'px';app.style.bottom='auto'}else{app.style.height='';app.style.bottom=''}}
-function layout(){fitApp();const w=app.clientWidth,h=app.clientHeight,cs=getComputedStyle(document.getElementById('probe'));
+// iOS 26 sizes translucent-status-bar home-screen apps too short (WebKit 301108), so the app uses the opaque black
+// status bar instead: the page then sits below the bar and reaches the bottom edge.
+function layout(){const w=app.clientWidth,h=app.clientHeight,cs=getComputedStyle(document.getElementById('probe'));
   const st=parseFloat(cs.paddingTop)||0,sb=parseFloat(cs.paddingBottom)||0;
   S=w/PW;const fh=Math.max(PH,Math.round(h/S)),extra=fh-PH,nt=Math.round(extra*.45);
   if(fh!==FH||nt!==T||!pic){FH=fh;T=nt;B=extra-nt;for(const e of ENVS)e.bg=e.make();pic=mk()}
@@ -580,6 +577,8 @@ function layout(){fitApp();const w=app.clientWidth,h=app.clientHeight,cs=getComp
   document.getElementById('bot').style.top=(JY*S)+'px';document.getElementById('count').style.top=((JY+14)*S)+'px';
   document.getElementById('toast').style.top=((JY-44)*S)+'px'}
 addEventListener('resize',layout);addEventListener('orientationchange',()=>setTimeout(layout,300));
+// safe-area insets can arrive late in home-screen apps, so measure again once things settle
+addEventListener('load',()=>{layout();setTimeout(layout,400)});addEventListener('pageshow',()=>setTimeout(layout,100));visualViewport?.addEventListener('resize',layout);
 function drawJar(t){const n=save.jar[env.key]||0,x=Math.round(LW/2-7),y=JY-12,tint=env.tint;
   lg.fillStyle='rgba(0,0,0,.35)';lg.fillRect(x,y+4,14,20);R(lg,x+3,y,8,3,C.rust);R(lg,x+2,y+3,10,1,C.rustD);
   line(lg,x+1,y+5,x+1,y+21,C.cyM);line(lg,x+12,y+5,x+12,y+21,C.cyM);line(lg,x+2,y+22,x+11,y+22,C.cyM);P(lg,x+2,y+4,C.cyM);P(lg,x+11,y+4,C.cyM);line(lg,x+3,y+7,x+3,y+11,'#5a7a84');
@@ -612,7 +611,7 @@ function toast(msg){const el=$('toast');el.textContent=msg;el.classList.add('on'
 function updateHud(){$('place').textContent=env.name;$('pageno').textContent=`${envIdx+1}/${ENVS.length}`;$('count').textContent=`${save.jar[env.key]||0} / 12`;
   $('total').textContent=`Fireflies caught on this tape: ${save.total}. Places woken: ${ENVS.filter(e=>save.lit[e.key]).length} of ${ENVS.length}.`;buildPlaces()}
 function applyEnv(i){envIdx=(i+ENVS.length)%ENVS.length;env=ENVS[envIdx];save.env=envIdx;persist();
-  document.documentElement.style.setProperty('--bd',env.bd);document.querySelector('meta[name="theme-color"]')?.setAttribute('content',env.bd);
+  document.documentElement.style.setProperty('--bd',env.bd);
   flies=Array.from({length:7},()=>newFly(false));gold=null;sparks=[];respawn=[];chain=0;updateHud();E.setEnv(env.key)}
 function goEnv(i){if(pendingEnv===null)pendingEnv=i}
 function buildPlaces(){const el=$('places');el.innerHTML='';ENVS.forEach((e,i)=>{const b=document.createElement('button');b.setAttribute('aria-current',i===envIdx);
